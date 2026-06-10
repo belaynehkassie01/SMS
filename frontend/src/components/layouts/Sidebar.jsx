@@ -106,7 +106,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
               <i className="bi bi-person-circle me-2"></i>
               {user?.fullName || user?.username}
               <br />
-              <span className="text-secondary">{user?.role}</span>
+              <span className="text-primary">{user?.role}</span>
             </div>
           ) : (
             <i className="bi bi-person-circle d-block text-center fs-4"></i>

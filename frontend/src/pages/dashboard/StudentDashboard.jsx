@@ -385,13 +385,13 @@ const StudentDashboard = () => {
               <div key={enrollment.EnrollmentID} className="col-md-6 col-lg-4">
                 <div className="card h-100 border">
                   <div className="card-body">
-                    <h6 className="card-title fw-semibold" style={{ color: '#212529' }}>
+                    <h6 className="card-title fw-semibold" style={{ color: '#white' }}>
                       {enrollment.CourseTitle || enrollment.Title || 'Course'}
                     </h6>
-                    <p className="card-text small mb-1" style={{ color: '#6c757d' }}>
+                    <p className="card-text small mb-1" style={{ color: '#white' }}>
                       <i className="bi bi-grid me-1"></i> Section: {enrollment.SectionName || 'N/A'}
                     </p>
-                    <p className="card-text small" style={{ color: '#6c757d' }}>
+                    <p className="card-text small" style={{ color: '#white' }}>
                       <i className="bi bi-person me-1"></i> Instructor: {enrollment.InstructorName || enrollment.FirstName ? `${enrollment.FirstName || ''} ${enrollment.LastName || ''}`.trim() : 'N/A'}
                     </p>
                   </div>
@@ -421,19 +421,19 @@ const StudentDashboard = () => {
                 {results.slice(0, 5).map((result) => (
                   <div key={result.ResultID} className="list-group-item d-flex justify-content-between align-items-center">
                     <div>
-                      <h6 className="mb-1 fw-semibold" style={{ color: '#212529' }}>
+                      <h6 className="mb-1 fw-semibold" style={{ color: '#white' }}>
                         {result.ExamName || 'Exam'}
                       </h6>
-                      <small style={{ color: '#6c757d' }}>
+                      <small style={{ color: '#white' }}>
                         {result.CourseTitle || 'Course'}
                       </small>
                     </div>
                     <div className="text-end">
-                      <span className={`badge ${getGradeBadgeColor(result.Grade)} fs-6`}>
+                      <span className={`badge ${getGradeBadgeColor(result.Grade)} fs-6` }>
                         {result.Grade || 'N/A'}
                       </span>
                       <div className="mt-1">
-                        <small style={{ color: '#6c757d' }}>
+                        <small style={{ color: '#white' }}>
                           Marks: {result.ObtainedMarks || 0} / {result.MaxMarks || 100}
                         </small>
                       </div>
@@ -470,10 +470,10 @@ const StudentDashboard = () => {
                   <tbody>
                     {attendance.slice(0, 5).map((record) => (
                       <tr key={record.AttendanceID}>
-                        <td className="fw-semibold" style={{ color: '#212529' }}>
+                        <td className="fw-semibold" style={{ color: '#white' }}>
                           {record.CourseTitle || 'Course'}
                         </td>
-                        <td style={{ color: '#6c757d' }}>
+                        <td style={{ color: '#white' }}>
                           {record.Date ? new Date(record.Date).toLocaleDateString() : 'N/A'}
                         </td>
                         <td>
