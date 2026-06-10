@@ -35,7 +35,6 @@ const Sidebar = ({ collapsed, onToggle }) => {
       { path: '/results', label: 'Results', icon: 'bi-trophy' },
       { path: '/attendance', label: 'Attendance', icon: 'bi-calendar-check' },
       { path: '/payments', label: 'Payments', icon: 'bi-credit-card' },
-      { path: '/reports', label: 'Reports', icon: 'bi-bar-chart' },  // ✅ Added Reports for Admin
     ];
     const teacherItems = [
       { path: '/sections', label: 'My Sections', icon: 'bi-chalkboard' },
@@ -43,13 +42,11 @@ const Sidebar = ({ collapsed, onToggle }) => {
       { path: '/exams', label: 'Exams', icon: 'bi-file-text' },
       { path: '/results', label: 'Results', icon: 'bi-trophy' },
       { path: '/teaches', label: 'Teacher Assignments', icon: 'bi-link' },
-      { path: '/reports', label: 'Reports', icon: 'bi-bar-chart' },  // ✅ Added Reports for Teacher
     ];
     const studentItems = [
       { path: '/courses', label: 'My Courses', icon: 'bi-book-half' },
       { path: '/attendance', label: 'Attendance', icon: 'bi-calendar-check' },
       { path: '/results', label: 'Results', icon: 'bi-bar-chart-steps' },
-      { path: '/reports', label: 'My Reports', icon: 'bi-bar-chart' },  // ✅ Added Reports for Student
     ];
  
     let items = [...commonItems];
