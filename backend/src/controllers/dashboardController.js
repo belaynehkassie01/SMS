@@ -4,41 +4,41 @@ const AppError = require("../utils/AppError");
 // DASHBOARD STATS (Enhanced)
 const getStats = async (req, res, next) => {
   try {
-    // Basic counts
-    const [[students]] = await db.query("SELECT COUNT(*) AS totalStudents FROM student");
-    const [[teachers]] = await db.query("SELECT COUNT(*) AS totalTeachers FROM teacher");
-    const [[courses]] = await db.query("SELECT COUNT(*) AS totalCourses FROM course");
-    const [[departments]] = await db.query("SELECT COUNT(*) AS totalDepartments FROM department");
-    const [[payments]] = await db.query("SELECT COUNT(*) AS totalPayments FROM payment");
+    // Basic counts (use correct table names with capital letters)
+    const [[students]] = await db.query("SELECT COUNT(*) AS totalStudents FROM Student");
+    const [[teachers]] = await db.query("SELECT COUNT(*) AS totalTeachers FROM Teacher");
+    const [[courses]] = await db.query("SELECT COUNT(*) AS totalCourses FROM Course");
+    const [[departments]] = await db.query("SELECT COUNT(*) AS totalDepartments FROM Department");
+    const [[payments]] = await db.query("SELECT COUNT(*) AS totalPayments FROM Payment");
 
     // Additional counts
-    const [[sections]] = await db.query("SELECT COUNT(*) AS totalSections FROM section");
-    const [[enrollments]] = await db.query("SELECT COUNT(*) AS totalEnrollments FROM enrollment");
+    const [[sections]] = await db.query("SELECT COUNT(*) AS totalSections FROM Section");
+    const [[enrollments]] = await db.query("SELECT COUNT(*) AS totalEnrollments FROM Enrollment");
 
     // Financial: total revenue (sum of all payments)
-    const [[revenue]] = await db.query("SELECT SUM(amount) AS totalRevenue FROM payment");
+    const [[revenue]] = await db.query("SELECT SUM(Amount) AS totalRevenue FROM Payment");
     
     // Attendance rate for last 30 days (percentage of present)
     const [[attendanceRate]] = await db.query(`
       SELECT 
         ROUND(
-          (SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2
+          (SUM(CASE WHEN Status = 'Present' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 2
         ) AS rate
-      FROM attendance
-      WHERE date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+      FROM Attendance
+      WHERE Date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
     `);
 
     // Recent enrollments (last 5) with student name & course title
-    const recentEnrollments = await db.query(`
+    const [recentEnrollments] = await db.query(`
       SELECT 
         CONCAT(p.FirstName, ' ', p.LastName) AS studentName,
         c.Title AS courseTitle,
         e.EnrollmentDate AS date
-      FROM enrollment e
-      JOIN student s ON e.StudentID = s.StudentID
-      JOIN person p ON s.PersonID = p.PersonID
-      JOIN section sec ON e.SectionID = sec.SectionID
-      JOIN course c ON sec.CourseID = c.CourseID
+      FROM Enrollment e
+      JOIN Student s ON e.StudentID = s.StudentID
+      JOIN Person p ON s.PersonID = p.PersonID
+      JOIN Section sec ON e.SectionID = sec.SectionID
+      JOIN Course c ON sec.CourseID = c.CourseID
       ORDER BY e.EnrollmentDate DESC
       LIMIT 5
     `);
@@ -55,11 +55,12 @@ const getStats = async (req, res, next) => {
         enrollments: enrollments.totalEnrollments,
         totalRevenue: revenue.totalRevenue || 0,
         attendanceRate: attendanceRate.rate || 0,
-        recentEnrollments: recentEnrollments[0] || [],
+        recentEnrollments: recentEnrollments || [],
       },
     });
 
   } catch (error) {
+    console.error("Dashboard stats error:", error);
     next(error);
   }
 };
