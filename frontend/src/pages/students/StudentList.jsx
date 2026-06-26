@@ -22,21 +22,25 @@ const StudentList = () => {
   });
 
   // CORRECTED: Your backend returns { success: true, data: [...] }
-  // The data from useQuery contains the axios response: { data: { success: true, data: [...] } }
   const responseData = data?.data || {};
-  const students = responseData?.data || [];  // This is the array of students
+  const students = responseData?.data || [];
   const total = students.length;
 
-  console.log('Students data:', students); // Debug
+  console.log('Students data:', students); // Debug - check what fields are available
 
   const deleteMutation = useMutation({
     mutationFn: deleteStudent,
     onSuccess: async () => {
       success('Student deleted successfully');
       await queryClient.invalidateQueries({ queryKey: ['students'] });
+      refetch();
     },
     onError: (err) => {
-      notifyError(err?.response?.data?.message || 'Failed to delete student');
+      if (err?.response?.status === 401) {
+        notifyError('Session expired. Please login again.');
+      } else {
+        notifyError(err?.response?.data?.message || 'Failed to delete student');
+      }
     },
   });
 
@@ -151,68 +155,88 @@ const StudentList = () => {
                     </td>
                   </tr>
                 ) : (
-                  students.map((student) => (
-                    <tr key={student.StudentID || student.id}>
-                      <td className="text-white">{student.StudentID || student.id}</td>
-                      <td className="text-white fw-semibold">{student.StudentNumber || student.studentNumber}</td>
-                      <td className="text-white">{student.FullName || `${student.FirstName} ${student.LastName}`}</td>
-                      <td className="text-white">{student.Email || student.email || '-'}</td>
-                      <td className="text-white">{student.Phone || student.phone || '-'}</td>
-                      <td className="text-white">
-                        {student.DeptName || 
-                         student.DepartmentName || 
-                         student.departmentName || 
-                         '-'}
-                      </td>
-                      <td>
-                        <span className={`badge ${(student.Status || student.status) === 'Active' ? 'bg-success' : 'bg-secondary'}`}>
-                          {student.Status || student.status || 'Active'}
-                        </span>
-                       </td>
-                      <td>
-                        <div className="btn-group btn-group-sm">
-                          {/* View Details Button */}
-                          <Link
-                            to={`/students/view/${student.StudentID || student.id}`}
-                            className="btn btn-outline-info"
-                            title="View Details"
-                          >
-                            <i className="bi bi-eye"></i>
-                          </Link>
-                          
-                          {/* Generate Report Card Button - NEW */}
-                          <Link
-                            to={`/students/report/${student.StudentID || student.id}`}
-                            className="btn btn-outline-success"
-                            title="Generate Report Card"
-                          >
-                            <i className="bi bi-file-text"></i>
-                          </Link>
-                          
-                          {/* Edit Button */}
-                          <Link
-                            to={`/students/edit/${student.StudentID || student.id}`}
-                            className="btn btn-outline-primary"
-                            title="Edit"
-                          >
-                            <i className="bi bi-pencil"></i>
-                          </Link>
-                          
-                          {/* Delete Button - Admin only */}
-                          {user?.role === 'Admin' && (
-                            <button
-                              className="btn btn-outline-danger"
-                              onClick={() => handleDelete(student.StudentID || student.id, student.FullName || `${student.FirstName} ${student.LastName}`)}
-                              disabled={deleteMutation.isLoading}
-                              title="Delete"
+                  students.map((student) => {
+                    // Debug: log each student to see available fields
+                    console.log('Student object:', student);
+                    
+                    // 🔥 FIXED: Get the correct ID for deletion
+                    // Use PersonID first (backend expects this for deletion)
+                    const studentId = student.PersonID || student.id || student.StudentID;
+                    
+                    // Get full name
+                    const fullName = student.FullName || 
+                                    `${student.FirstName || ''} ${student.LastName || ''}`.trim() || 
+                                    'Unknown';
+                    
+                    return (
+                      <tr key={student.StudentID || student.id || student.PersonID}>
+                        <td className="text-white">{student.StudentID || student.id || '-'}</td>
+                        <td className="text-white fw-semibold">
+                          {student.StudentNumber || student.studentNumber || '-'}
+                        </td>
+                        <td className="text-white">{fullName}</td>
+                        <td className="text-white">{student.Email || student.email || '-'}</td>
+                        <td className="text-white">{student.Phone || student.phone || '-'}</td>
+                        <td className="text-white">
+                          {student.DeptName || 
+                           student.DepartmentName || 
+                           student.departmentName || 
+                           '-'}
+                        </td>
+                        <td>
+                          <span className={`badge ${(student.Status || student.status) === 'Active' ? 'bg-success' : 'bg-secondary'}`}>
+                            {student.Status || student.status || 'Active'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="btn-group btn-group-sm">
+                            {/* View Details Button */}
+                            <Link
+                              to={`/students/view/${studentId}`}
+                              className="btn btn-outline-info"
+                              title="View Details"
                             >
-                              <i className="bi bi-trash"></i>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                              <i className="bi bi-eye"></i>
+                            </Link>
+                            
+                            {/* Generate Report Card Button */}
+                            <Link
+                              to={`/students/report/${studentId}`}
+                              className="btn btn-outline-success"
+                              title="Generate Report Card"
+                            >
+                              <i className="bi bi-file-text"></i>
+                            </Link>
+                            
+                            {/* Edit Button */}
+                            <Link
+                              to={`/students/edit/${studentId}`}
+                              className="btn btn-outline-primary"
+                              title="Edit"
+                            >
+                              <i className="bi bi-pencil"></i>
+                            </Link>
+                            
+                            {/* 🔥 FIXED: Delete Button - Admin only */}
+                            {user?.role === 'Admin' && (
+                              <button
+                                className="btn btn-outline-danger"
+                                onClick={() => handleDelete(studentId, fullName)}
+                                disabled={deleteMutation.isLoading}
+                                title="Delete"
+                              >
+                                {deleteMutation.isLoading ? (
+                                  <span className="spinner-border spinner-border-sm"></span>
+                                ) : (
+                                  <i className="bi bi-trash"></i>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -222,7 +246,7 @@ const StudentList = () => {
 
       {/* Info footer */}
       <div className="text-center text-secondary small mt-3">
-        Showing {students.length} students
+        Showing {students.length} student{students.length !== 1 ? 's' : ''}
       </div>
     </div>
   );

@@ -27,7 +27,7 @@ const TeacherForm = () => {
     email: '',
     phone: '',
     address: '',
-    gender: '',
+    gender: '', // Will store 'M', 'F', or 'O'
     birthDate: '',
     departmentId: '',
     hireDate: '',
@@ -56,6 +56,7 @@ const TeacherForm = () => {
     const newErrors = {};
     if (!formData.firstName?.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName?.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.gender) newErrors.gender = 'Gender is required';
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Invalid email format';
     }
@@ -73,7 +74,7 @@ const TeacherForm = () => {
         Email: data.email || null,
         Phone: data.phone || null,
         Address: data.address || null,
-        Gender: data.gender || null,
+        Gender: data.gender || null, // Now sends 'M', 'F', or 'O'
         BirthDate: data.birthDate || null,
         // Teacher table fields
         DeptID: data.departmentId ? parseInt(data.departmentId) : null,
@@ -206,18 +207,22 @@ const TeacherForm = () => {
                   ></textarea>
                 </div>
                 <div className="col-md-4">
-                  <label className="form-label fw-medium" style={{ color: '#212529' }}>Gender</label>
+                  <label className="form-label fw-medium" style={{ color: '#212529' }}>
+                    Gender <span className="text-danger">*</span>
+                  </label>
                   <select 
                     name="gender" 
-                    className="form-select bg-white text-dark" 
+                    className={`form-select bg-white text-dark ${errors.gender ? 'is-invalid' : ''}`} 
                     value={formData.gender} 
                     onChange={handleChange}
                     style={{ backgroundColor: '#ffffff', color: '#212529', border: '1px solid #ced4da' }}
                   >
                     <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
+                    <option value="M">Male</option>      {/* ✅ FIXED: 'M' instead of 'Male' */}
+                    <option value="F">Female</option>    {/* ✅ FIXED: 'F' instead of 'Female' */}
+                    <option value="O">Other</option>     {/* ✅ FIXED: Added 'O' for Other */}
                   </select>
+                  {errors.gender && <div className="invalid-feedback">{errors.gender}</div>}
                 </div>
                 <div className="col-md-4">
                   <label className="form-label fw-medium" style={{ color: '#212529' }}>Birth Date</label>

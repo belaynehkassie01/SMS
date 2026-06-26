@@ -27,9 +27,6 @@ const TeacherList = () => {
   const responseData = data?.data || {};
   const teachers = responseData?.data || [];
   
-  // Alternative extraction if the above doesn't work:
-  // const teachers = data?.data?.data || data?.data || [];
-  
   console.log('Teachers array:', teachers);
   console.log('Is teachers an array?', Array.isArray(teachers));
   console.log('Number of teachers:', teachers.length);
@@ -159,51 +156,67 @@ const TeacherList = () => {
                     </td>
                   </tr>
                 ) : (
-                  teachersList.map((teacher) => (
-                    <tr key={teacher.TeacherID}>
-                      <td className="text-white">{teacher.TeacherID}</td>
-                      <td className="text-white fw-semibold">
-                        {`${teacher.FirstName || ''} ${teacher.LastName || ''}`.trim() || '-'}
-                      </td>
-                      <td className="text-white">{teacher.DeptName || '-'}</td>
-                      <td className="text-white">{teacher.Qualification || '-'}</td>
-                      <td className="text-white">{teacher.Specialization || '-'}</td>
-                      <td className="text-white">
-                        {teacher.HireDate ? new Date(teacher.HireDate).toLocaleDateString() : '-'}
-                      </td>
-                      <td className="text-white">
-                        {teacher.Salary ? `ETB ${Number(teacher.Salary).toLocaleString()}` : '-'}
-                      </td>
-                      <td>
-                        <div className="btn-group btn-group-sm">
-                          <Link
-                            to={`/teachers/view/${teacher.TeacherID}`}
-                            className="btn btn-outline-info"
-                            title="View Details"
-                          >
-                            <i className="bi bi-eye"></i>
-                          </Link>
-                          <Link
-                            to={`/teachers/edit/${teacher.TeacherID}`}
-                            className="btn btn-outline-primary"
-                            title="Edit"
-                          >
-                            <i className="bi bi-pencil"></i>
-                          </Link>
-                          {user?.role === 'Admin' && (
-                            <button
-                              className="btn btn-outline-danger"
-                              onClick={() => handleDelete(teacher.TeacherID, `${teacher.FirstName} ${teacher.LastName}`)}
-                              disabled={deleteMutation.isLoading}
-                              title="Delete"
+                  teachersList.map((teacher) => {
+                    // Debug: log each teacher to see available fields
+                    console.log('Teacher object:', teacher);
+                    
+                    // Get the correct ID for deletion
+                    // Try PersonID first, then id, then TeacherID as fallback
+                    const teacherId = teacher.PersonID || teacher.id || teacher.TeacherID;
+                    
+                    return (
+                      <tr key={teacher.TeacherID || teacher.id || teacher.PersonID}>
+                        <td className="text-white">{teacher.TeacherID || teacher.id || '-'}</td>
+                        <td className="text-white fw-semibold">
+                          {`${teacher.FirstName || ''} ${teacher.LastName || ''}`.trim() || '-'}
+                        </td>
+                        <td className="text-white">{teacher.DeptName || '-'}</td>
+                        <td className="text-white">{teacher.Qualification || '-'}</td>
+                        <td className="text-white">{teacher.Specialization || '-'}</td>
+                        <td className="text-white">
+                          {teacher.HireDate ? new Date(teacher.HireDate).toLocaleDateString() : '-'}
+                        </td>
+                        <td className="text-white">
+                          {teacher.Salary ? `ETB ${Number(teacher.Salary).toLocaleString()}` : '-'}
+                        </td>
+                        <td>
+                          <div className="btn-group btn-group-sm">
+                            <Link
+                              to={`/teachers/view/${teacher.TeacherID || teacher.id || teacher.PersonID}`}
+                              className="btn btn-outline-info"
+                              title="View Details"
                             >
-                              <i className="bi bi-trash"></i>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                              <i className="bi bi-eye"></i>
+                            </Link>
+                            <Link
+                              to={`/teachers/edit/${teacher.TeacherID || teacher.id || teacher.PersonID}`}
+                              className="btn btn-outline-primary"
+                              title="Edit"
+                            >
+                              <i className="bi bi-pencil"></i>
+                            </Link>
+                            {user?.role === 'Admin' && (
+                              <button
+                                className="btn btn-outline-danger"
+                                onClick={() => handleDelete(
+                                  teacherId, 
+                                  `${teacher.FirstName || ''} ${teacher.LastName || ''}`.trim() || 'Unknown'
+                                )}
+                                disabled={deleteMutation.isLoading}
+                                title="Delete"
+                              >
+                                {deleteMutation.isLoading ? (
+                                  <span className="spinner-border spinner-border-sm"></span>
+                                ) : (
+                                  <i className="bi bi-trash"></i>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
