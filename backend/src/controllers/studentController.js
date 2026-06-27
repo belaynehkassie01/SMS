@@ -81,19 +81,40 @@ const updateStudent = async (req, res, next) => {
 };
 
 // DELETE STUDENT
+// controllers/studentController.js - DELETE STUDENT (FIXED)
+
+// DELETE STUDENT
 const deleteStudent = async (req, res, next) => {
   try {
-    const [result] = await Student.deleteStudent(req.params.id);
-
-    if (result.affectedRows === 0) {
-      return next(new AppError("Student not found", 404));
+    const { id } = req.params;
+    
+    console.log('📌 req.params:', req.params);
+    console.log('📌 ID from params:', id);
+    
+    if (!id) {
+      return next(new AppError('Student ID is required', 400));
     }
-
+    
+    // 🔥 FIX: Don't destructure if you're not sure what's returned
+    // Just call the function and check the result
+    const result = await Student.deleteStudent(id);
+    
+    console.log('📌 Delete result:', result);
+    
+    // Check if result has affectedRows
+    const affectedRows = result?.affectedRows || result?.[0]?.affectedRows || 0;
+    
+    if (affectedRows === 0) {
+      return next(new AppError('Student not found', 404));
+    }
+    
     res.json({
       success: true,
-      message: "Student deleted successfully",
+      message: 'Student deleted successfully',
     });
+    
   } catch (error) {
+    console.error('❌ Delete error:', error);
     next(error);
   }
 };
