@@ -176,8 +176,32 @@ const updateTeacher = async (id, data) => {
 };
 
 // DELETE TEACHER
-const deleteTeacher = (id) => {
-  return db.query(`DELETE FROM Teacher WHERE TeacherID = ?`, [id]);
+const deleteTeacher = async (req, res, next) => {
+  try {
+    const { id } = req.params; // This should be PersonID
+    
+    console.log('🗑️ Deleting teacher with PersonID:', id);
+    
+    // Try to delete by PersonID
+    const [result] = await Teacher.deleteTeacher(id);
+    
+    // Check if any rows were affected (deleted)
+    if (!result || result.affectedRows === 0) {
+      console.log('❌ Teacher not found with PersonID:', id);
+      return next(new AppError(`Teacher with PersonID ${id} not found`, 404));
+    }
+
+    console.log('✅ Teacher deleted successfully');
+    
+    res.json({
+      success: true,
+      message: "Teacher deleted successfully",
+    });
+
+  } catch (error) {
+    console.error('❌ Delete error:', error);
+    next(error);
+  }
 };
 
 module.exports = {
