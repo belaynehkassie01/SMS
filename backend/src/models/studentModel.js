@@ -251,6 +251,7 @@ const updateStudent = async (id, data) => {
 };
 
 // DELETE STUDENT
+// models/studentModel.js
 const deleteStudent = async (personId) => {
   const connection = await db.getConnection();
   
@@ -259,7 +260,7 @@ const deleteStudent = async (personId) => {
     
     await connection.beginTransaction();
     
-    // Check if student exists with this PersonID
+    // 1. Check if student exists with this PersonID
     const [studentRows] = await connection.query(
       `SELECT PersonID FROM Student WHERE PersonID = ?`,
       [personId]
@@ -269,14 +270,20 @@ const deleteStudent = async (personId) => {
       throw new Error('Student not found');
     }
     
-    // Delete from Person table (ON DELETE CASCADE will remove from Student)
+    // 2. Delete from Student table first (ON DELETE CASCADE not required)
+    await connection.query(
+      `DELETE FROM Student WHERE PersonID = ?`,
+      [personId]
+    );
+    
+    // 3. Now delete from Person table
     const [result] = await connection.query(
       `DELETE FROM Person WHERE PersonID = ?`,
       [personId]
     );
     
     await connection.commit();
-    console.log('✅ Student deleted successfully, affected rows:', result.affectedRows);
+    console.log('✅ Student deleted successfully');
     return result;
     
   } catch (error) {
