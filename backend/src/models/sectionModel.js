@@ -35,7 +35,7 @@ const getSectionById = (id) => {
       s.RoomNumber,
       s.Schedule,
       s.Capacity,
-      s.IsActive,
+      s.IsActive
     FROM Section s
     LEFT JOIN Course c ON s.CourseID = c.CourseID
     LEFT JOIN AcademicYear ay ON s.AcademicYearID = ay.AcademicYearID
