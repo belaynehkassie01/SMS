@@ -10,6 +10,20 @@ const createStudent = async (data) => {
     
     await connection.beginTransaction();
 
+    // 🔥 FIX: Map gender values
+    const genderMap = {
+        'Male': 'M',
+        'Female': 'F',
+        'Other': 'O',
+        'male': 'M',
+        'female': 'F',
+        'other': 'O',
+        'M': 'M',
+        'F': 'F',
+        'O': 'O'
+    };
+    const mappedGender = genderMap[data.Gender] || genderMap[data.gender] || null;
+
     // 1. Insert Person first
     const [personResult] = await connection.query(
       `INSERT INTO Person (FirstName, LastName, Email, Phone, Address, Gender, BirthDate, IsActive, CreatedAt, UpdatedAt)
@@ -20,7 +34,7 @@ const createStudent = async (data) => {
         data.Email || null,
         data.Phone || null,
         data.Address || null,
-        data.Gender || null,
+        mappedGender, // ✅ Fixed
         data.BirthDate || null,
       ]
     );
@@ -91,8 +105,69 @@ const getAllStudents = () => {
   return db.query(sql);
 };
 
-// GET STUDENT BY ID
+// ✅ FIXED: GET STUDENT BY ID - Handles both PersonID and StudentID
 const getStudentById = (id) => {
+  const sql = `
+    SELECT 
+      s.StudentID,
+      s.StudentNumber,
+      s.DepartmentID,
+      s.SectionID,
+      s.EnrollmentDate,
+      s.Status,
+      s.GuardianName,
+      s.GuardianPhone,
+      s.GuardianEmail,
+      s.PersonID,
+      p.FirstName,
+      p.LastName,
+      p.Email,
+      p.Phone,
+      p.Address,
+      p.Gender,
+      p.BirthDate,
+      d.DeptName as DepartmentName
+    FROM Student s
+    JOIN Person p ON s.PersonID = p.PersonID
+    LEFT JOIN Department d ON s.DepartmentID = d.DeptID
+    WHERE s.StudentID = ? OR s.PersonID = ?
+  `;
+
+  return db.query(sql, [id, id]);
+};
+
+// GET STUDENT BY PERSON ID
+const getStudentByPersonId = (personId) => {
+  const sql = `
+    SELECT 
+      s.StudentID,
+      s.StudentNumber,
+      s.DepartmentID,
+      s.SectionID,
+      s.EnrollmentDate,
+      s.Status,
+      s.GuardianName,
+      s.GuardianPhone,
+      s.GuardianEmail,
+      s.PersonID,
+      p.FirstName,
+      p.LastName,
+      p.Email,
+      p.Phone,
+      p.Address,
+      p.Gender,
+      p.BirthDate,
+      d.DeptName as DepartmentName
+    FROM Student s
+    JOIN Person p ON s.PersonID = p.PersonID
+    LEFT JOIN Department d ON s.DepartmentID = d.DeptID
+    WHERE s.PersonID = ?
+  `;
+  return db.query(sql, [personId]);
+};
+
+// GET STUDENT BY STUDENT ID
+const getStudentByStudentId = (studentId) => {
   const sql = `
     SELECT 
       s.StudentID,
@@ -118,12 +193,25 @@ const getStudentById = (id) => {
     LEFT JOIN Department d ON s.DepartmentID = d.DeptID
     WHERE s.StudentID = ?
   `;
-
-  return db.query(sql, [id]);
+  return db.query(sql, [studentId]);
 };
 
 // UPDATE PERSON TABLE (needed for edit)
 const updatePerson = async (personId, data) => {
+  // 🔥 FIX: Map gender values
+  const genderMap = {
+      'Male': 'M',
+      'Female': 'F',
+      'Other': 'O',
+      'male': 'M',
+      'female': 'F',
+      'other': 'O',
+      'M': 'M',
+      'F': 'F',
+      'O': 'O'
+  };
+  const mappedGender = genderMap[data.Gender] || genderMap[data.gender] || null;
+
   const sql = `
     UPDATE Person
     SET 
@@ -144,7 +232,7 @@ const updatePerson = async (personId, data) => {
     data.Email || null,
     data.Phone || null,
     data.Address || null,
-    data.Gender || null,
+    mappedGender, // ✅ Fixed
     data.BirthDate || null,
     personId,
   ]);
@@ -179,27 +267,70 @@ const updateStudentTable = async (id, data) => {
   ]);
 };
 
-// UPDATE STUDENT (combined)
+// ✅ FIXED: UPDATE STUDENT (combined) - Handles both PersonID and StudentID
 const updateStudent = async (id, data) => {
   const connection = await db.getConnection();
 
   try {
-    console.log("📝 Updating student ID:", id);
+    console.log("📝 Updating student with ID:", id);
     
     await connection.beginTransaction();
 
-    // 1. Get PersonID first
-    const [studentRows] = await connection.query(
-      `SELECT PersonID FROM Student WHERE StudentID = ?`,
-      [id]
-    );
+    // 🔥 FIX: Map gender values
+    const genderMap = {
+        'Male': 'M',
+        'Female': 'F',
+        'Other': 'O',
+        'male': 'M',
+        'female': 'F',
+        'other': 'O',
+        'M': 'M',
+        'F': 'F',
+        'O': 'O'
+    };
+    const mappedGender = genderMap[data.Gender] || genderMap[data.gender] || null;
+    console.log('📌 Mapped Gender:', mappedGender);
 
-    if (!studentRows.length) {
-      throw new Error("Student not found");
+    let personId;
+    let studentId;
+    
+    // 🔥 FIX: Determine if id is PersonID (number) or StudentID (string)
+    if (!isNaN(id) && Number.isInteger(Number(id))) {
+      // id is a number - treat as PersonID
+      personId = id;
+      console.log('🔍 Searching by PersonID:', personId);
+      
+      const [studentRows] = await connection.query(
+        `SELECT StudentID FROM Student WHERE PersonID = ?`,
+        [personId]
+      );
+      
+      if (!studentRows || studentRows.length === 0) {
+        console.log('❌ No student found with PersonID:', personId);
+        throw new Error('Student not found');
+      }
+      
+      studentId = studentRows[0].StudentID;
+      console.log('✅ Found StudentID:', studentId, 'for PersonID:', personId);
+      
+    } else {
+      // id is a string - treat as StudentID
+      studentId = id;
+      console.log('🔍 Searching by StudentID:', studentId);
+      
+      const [studentRows] = await connection.query(
+        `SELECT PersonID FROM Student WHERE StudentID = ?`,
+        [studentId]
+      );
+      
+      if (!studentRows || studentRows.length === 0) {
+        console.log('❌ No student found with StudentID:', studentId);
+        throw new Error('Student not found');
+      }
+      
+      personId = studentRows[0].PersonID;
+      console.log('✅ Found PersonID:', personId, 'for StudentID:', studentId);
     }
-
-    const personId = studentRows[0].PersonID;
-    console.log("Found PersonID:", personId);
 
     // 2. Update PERSON table
     await connection.query(
@@ -212,7 +343,7 @@ const updateStudent = async (id, data) => {
         data.Email || null,
         data.Phone || null,
         data.Address || null,
-        data.Gender || null,
+        mappedGender, // ✅ Fixed
         data.BirthDate || null,
         personId,
       ]
@@ -233,7 +364,7 @@ const updateStudent = async (id, data) => {
         data.GuardianName || null,
         data.GuardianPhone || null,
         data.GuardianEmail || null,
-        id,
+        studentId, // ✅ Using StudentID
       ]
     );
 
@@ -250,10 +381,7 @@ const updateStudent = async (id, data) => {
   }
 };
 
-// DELETE STUDENT
-// models/studentModel.js
-// models/studentModel.js - DELETE STUDENT (FULLY FIXED)
-
+// ✅ FIXED: DELETE STUDENT
 const deleteStudent = async (personId) => {
   const connection = await db.getConnection();
   
@@ -338,10 +466,13 @@ const deleteStudent = async (personId) => {
   }
 };
 
+// ✅ FIXED: EXPORT ALL FUNCTIONS
 module.exports = {
   createStudent,
   getAllStudents,
   getStudentById,
+  getStudentByPersonId,
+  getStudentByStudentId,
   updateStudent,
   deleteStudent,
 };
