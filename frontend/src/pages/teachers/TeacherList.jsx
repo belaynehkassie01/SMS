@@ -49,6 +49,7 @@ const TeacherList = () => {
   });
 
   const handleDelete = (id, name) => {
+    console.log('📌 Deleting teacher with PersonID:', id);
     if (window.confirm(`Are you sure you want to delete teacher: ${name}?`)) {
       deleteMutation.mutate(id);
     }
@@ -160,36 +161,49 @@ const TeacherList = () => {
                     // Debug: log each teacher to see available fields
                     console.log('Teacher object:', teacher);
                     
-                    // Get the correct ID for deletion
-                    // Try PersonID first, then id, then TeacherID as fallback
-                    const teacherId = teacher.PersonID || teacher.id || teacher.TeacherID;
+                    // 🔥 FIXED: Get the correct ID for deletion
+                    // PersonID is the primary key from Person table (backend expects this)
+                    // Also handle camelCase vs PascalCase field names
+                    const teacherId = teacher.PersonID || teacher.personID || teacher.id || teacher.TeacherID;
+                    
+                    // Get full name - handle both PascalCase and camelCase
+                    const firstName = teacher.FirstName || teacher.firstName || '';
+                    const lastName = teacher.LastName || teacher.lastName || '';
+                    const fullName = `${firstName} ${lastName}`.trim() || teacher.FullName || teacher.fullName || 'Unknown';
+                    
+                    // Get department name - handle both PascalCase and camelCase
+                    const deptName = teacher.DeptName || teacher.deptName || teacher.DepartmentName || teacher.departmentName || '-';
+                    
+                    // Get hire date - handle both PascalCase and camelCase
+                    const hireDate = teacher.HireDate || teacher.hireDate;
+                    
+                    // Get salary - handle both PascalCase and camelCase
+                    const salary = teacher.Salary || teacher.salary;
                     
                     return (
-                      <tr key={teacher.TeacherID || teacher.id || teacher.PersonID}>
-                        <td className="text-white">{teacher.TeacherID || teacher.id || '-'}</td>
-                        <td className="text-white fw-semibold">
-                          {`${teacher.FirstName || ''} ${teacher.LastName || ''}`.trim() || '-'}
-                        </td>
-                        <td className="text-white">{teacher.DeptName || '-'}</td>
-                        <td className="text-white">{teacher.Qualification || '-'}</td>
-                        <td className="text-white">{teacher.Specialization || '-'}</td>
+                      <tr key={teacher.TeacherID || teacher.teacherID || teacher.id || teacher.PersonID}>
+                        <td className="text-white">{teacher.TeacherID || teacher.teacherID || teacher.id || '-'}</td>
+                        <td className="text-white fw-semibold">{fullName}</td>
+                        <td className="text-white">{deptName}</td>
+                        <td className="text-white">{teacher.Qualification || teacher.qualification || '-'}</td>
+                        <td className="text-white">{teacher.Specialization || teacher.specialization || '-'}</td>
                         <td className="text-white">
-                          {teacher.HireDate ? new Date(teacher.HireDate).toLocaleDateString() : '-'}
+                          {hireDate ? new Date(hireDate).toLocaleDateString() : '-'}
                         </td>
                         <td className="text-white">
-                          {teacher.Salary ? `ETB ${Number(teacher.Salary).toLocaleString()}` : '-'}
+                          {salary ? `ETB ${Number(salary).toLocaleString()}` : '-'}
                         </td>
                         <td>
                           <div className="btn-group btn-group-sm">
                             <Link
-                              to={`/teachers/view/${teacher.TeacherID || teacher.id || teacher.PersonID}`}
+                              to={`/teachers/view/${teacherId}`}
                               className="btn btn-outline-info"
                               title="View Details"
                             >
                               <i className="bi bi-eye"></i>
                             </Link>
                             <Link
-                              to={`/teachers/edit/${teacher.TeacherID || teacher.id || teacher.PersonID}`}
+                              to={`/teachers/edit/${teacherId}`}
                               className="btn btn-outline-primary"
                               title="Edit"
                             >
@@ -198,10 +212,7 @@ const TeacherList = () => {
                             {user?.role === 'Admin' && (
                               <button
                                 className="btn btn-outline-danger"
-                                onClick={() => handleDelete(
-                                  teacherId, 
-                                  `${teacher.FirstName || ''} ${teacher.LastName || ''}`.trim() || 'Unknown'
-                                )}
+                                onClick={() => handleDelete(teacherId, fullName)}
                                 disabled={deleteMutation.isLoading}
                                 title="Delete"
                               >

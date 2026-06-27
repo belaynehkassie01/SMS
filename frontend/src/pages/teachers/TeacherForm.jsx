@@ -218,9 +218,9 @@ const TeacherForm = () => {
                     style={{ backgroundColor: '#ffffff', color: '#212529', border: '1px solid #ced4da' }}
                   >
                     <option value="">Select Gender</option>
-                    <option value="M">Male</option>      {/* ✅ FIXED: 'M' instead of 'Male' */}
-                    <option value="F">Female</option>    {/* ✅ FIXED: 'F' instead of 'Female' */}
-                    <option value="O">Other</option>     {/* ✅ FIXED: Added 'O' for Other */}
+                    <option value="M">Male</option>  
+                    <option value="F">Female</option>   
+                    <option value="O">Other</option>   
                   </select>
                   {errors.gender && <div className="invalid-feedback">{errors.gender}</div>}
                 </div>
