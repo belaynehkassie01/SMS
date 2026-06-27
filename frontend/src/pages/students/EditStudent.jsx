@@ -229,8 +229,9 @@ const EditStudent = () => {
                   <label className="form-label fw-medium" style={{ color: '#212529' }}>Gender</label>
                   <select name="gender" className="form-select" value={formData.gender} onChange={handleChange}>
                     <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                    <option value="O">Other</option>
                   </select>
                 </div>
                 <div className="col-md-4">
