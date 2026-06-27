@@ -1,4 +1,4 @@
-// backend/models/sectionModel.js
+// models/sectionModel.js
 const db = require("../config/database");
 
 // GET ALL SECTIONS with Course and Academic Year info
@@ -21,7 +21,7 @@ const getAllSections = () => {
   );
 };
 
-// GET SECTION BY ID with Course and Academic Year info
+// ✅ FIXED: GET SECTION BY ID - Removed trailing comma
 const getSectionById = (id) => {
   return db.query(
     `SELECT 
