@@ -175,32 +175,60 @@ const updateTeacher = async (id, data) => {
   }
 };
 
-// DELETE TEACHER
-const deleteTeacher = async (req, res, next) => {
+// models/teacherModel.js - DELETE TEACHER (FULLY FIXED)
+
+const deleteTeacher = async (personId) => {
+  const connection = await db.getConnection();
+  
   try {
-    const { id } = req.params; // This should be PersonID
+    console.log('🗑️ Deleting teacher with PersonID:', personId);
     
-    console.log('🗑️ Deleting teacher with PersonID:', id);
+    await connection.beginTransaction();
     
-    // Try to delete by PersonID
-    const [result] = await Teacher.deleteTeacher(id);
+    // 1. Get TeacherID from PersonID
+    const [teacherRows] = await connection.query(
+      `SELECT TeacherID FROM Teacher WHERE PersonID = ?`,
+      [personId]
+    );
     
-    // Check if any rows were affected (deleted)
-    if (!result || result.affectedRows === 0) {
-      console.log('❌ Teacher not found with PersonID:', id);
-      return next(new AppError(`Teacher with PersonID ${id} not found`, 404));
+    if (!teacherRows.length) {
+      throw new Error('Teacher not found');
     }
-
-    console.log('✅ Teacher deleted successfully');
     
-    res.json({
-      success: true,
-      message: "Teacher deleted successfully",
-    });
-
+    const teacherId = teacherRows[0].TeacherID;
+    console.log('📌 Found TeacherID:', teacherId);
+    
+    // 2. Delete Teaches records (references Teacher)
+    await connection.query(
+      `DELETE FROM Teaches WHERE TeacherID = ?`,
+      [teacherId]
+    );
+    console.log('✅ Deleted Teaches records');
+    
+    // 3. Delete Teacher record (references Person)
+    await connection.query(
+      `DELETE FROM Teacher WHERE PersonID = ?`,
+      [personId]
+    );
+    console.log('✅ Deleted Teacher record');
+    
+    // 4. Delete Person record
+    const [result] = await connection.query(
+      `DELETE FROM Person WHERE PersonID = ?`,
+      [personId]
+    );
+    console.log('✅ Deleted Person record');
+    
+    await connection.commit();
+    console.log('✅ Teacher and all related records deleted successfully');
+    return result;
+    
   } catch (error) {
-    console.error('❌ Delete error:', error);
-    next(error);
+    await connection.rollback();
+    console.error('❌ Error deleting teacher:', error);
+    throw error;
+  } finally {
+    connection.release();
   }
 };
 
