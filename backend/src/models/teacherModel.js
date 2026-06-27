@@ -230,7 +230,7 @@ const updateTeacher = async (id, data) => {
   }
 };
 
-// UPDATE TEACHER
+// UPDATE TEACHER - FIXED to handle both PersonID and TeacherID
 const updateTeacher = async (id, data) => {
   const connection = await db.getConnection();
 
