@@ -24,7 +24,7 @@ const createTeacher = async (data) => {
         emailValue,
         phoneValue,
         addressValue,
-        genderValue,  // ✅ Now sends NULL instead of empty string
+        genderValue,
         data.BirthDate || null,
       ]
     );
@@ -80,7 +80,33 @@ const getAllTeachers = () => {
   `);
 };
 
-// GET BY ID
+// ✅ FIXED: GET BY ID - Handles both PersonID and TeacherID
+const getTeacherById = (id) => {
+  return db.query(
+    `SELECT 
+      t.TeacherID,
+      t.PersonID,
+      t.DeptID,
+      t.HireDate,
+      t.Salary,
+      t.Qualification,
+      t.Specialization,
+      p.FirstName,
+      p.LastName,
+      p.Email,
+      p.Phone,
+      p.Address,
+      p.Gender,
+      p.BirthDate,
+      d.DeptName
+    FROM Teacher t
+    LEFT JOIN Person p ON t.PersonID = p.PersonID
+    LEFT JOIN Department d ON t.DeptID = d.DeptID
+    WHERE t.TeacherID = ? OR t.PersonID = ?`,
+    [id, id]
+  );
+};
+
 // GET BY PERSON ID
 const getTeacherByPersonId = (personId) => {
   return db.query(
@@ -135,7 +161,7 @@ const getTeacherByTeacherId = (teacherId) => {
   );
 };
 
-// UPDATE TEACHER - FIXED to handle both PersonID and TeacherID
+// ✅ FIXED: SINGLE updateTeacher function (removed duplicate)
 const updateTeacher = async (id, data) => {
   const connection = await db.getConnection();
 
@@ -230,76 +256,7 @@ const updateTeacher = async (id, data) => {
   }
 };
 
-// UPDATE TEACHER - FIXED to handle both PersonID and TeacherID
-const updateTeacher = async (id, data) => {
-  const connection = await db.getConnection();
-
-  try {
-    await connection.beginTransaction();
-
-    // 1. Get PersonID from Teacher
-    const [teacherRows] = await connection.query(
-      `SELECT PersonID FROM Teacher WHERE TeacherID = ?`,
-      [id]
-    );
-
-    if (!teacherRows.length) {
-      throw new Error("Teacher not found");
-    }
-
-    const personId = teacherRows[0].PersonID;
-
-    // Convert empty strings to NULL for Gender and other fields
-    const genderValue = data.Gender && data.Gender.trim() !== '' ? data.Gender : null;
-    const emailValue = data.Email && data.Email.trim() !== '' ? data.Email : null;
-    const phoneValue = data.Phone && data.Phone.trim() !== '' ? data.Phone : null;
-    const addressValue = data.Address && data.Address.trim() !== '' ? data.Address : null;
-
-    // 2. Update Person table
-    await connection.query(
-      `UPDATE Person 
-       SET FirstName = ?, LastName = ?, Email = ?, Phone = ?, 
-           Address = ?, Gender = ?, BirthDate = ?, UpdatedAt = NOW()
-       WHERE PersonID = ?`,
-      [
-        data.FirstName || null,
-        data.LastName || null,
-        emailValue,
-        phoneValue,
-        addressValue,
-        genderValue,  // ✅ Now sends NULL instead of empty string
-        data.BirthDate || null,
-        personId,
-      ]
-    );
-
-    // 3. Update Teacher table
-    await connection.query(
-      `UPDATE Teacher 
-       SET DeptID = ?, HireDate = ?, Salary = ?, Qualification = ?, Specialization = ?
-       WHERE TeacherID = ?`,
-      [
-        data.DeptID || null,
-        data.HireDate || null,
-        data.Salary || null,
-        data.Qualification || null,
-        data.Specialization || null,
-        id,
-      ]
-    );
-
-    await connection.commit();
-    return { success: true };
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
-  }
-};
-
-// models/teacherModel.js - DELETE TEACHER (FULLY FIXED)
-
+// DELETE TEACHER
 const deleteTeacher = async (personId) => {
   const connection = await db.getConnection();
   
@@ -355,10 +312,13 @@ const deleteTeacher = async (personId) => {
   }
 };
 
+// ✅ FIXED: EXPORT ALL FUNCTIONS
 module.exports = {
   createTeacher,
   getAllTeachers,
-  getTeacherById,
-  updateTeacher,
+  getTeacherById,          // ✅ NOW EXISTS
+  getTeacherByPersonId,
+  getTeacherByTeacherId,
+  updateTeacher,           // ✅ NOW SINGLE
   deleteTeacher,
 };
